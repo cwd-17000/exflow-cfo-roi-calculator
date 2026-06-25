@@ -2,10 +2,11 @@ import { BusinessInputs, calculateAllScenarios, calculateScenario, formatCurrenc
 
 export type CapturedLead = {
   firstName: string;
+  lastName: string;
   workEmail: string;
   companyName: string;
   jobTitle: string;
-  erp: string;
+  dynamicsPlatform: string;
   capturedAt?: string;
 };
 

@@ -25,10 +25,11 @@ type Field = {
 
 type LeadForm = {
   firstName: string;
+  lastName: string;
   workEmail: string;
   companyName: string;
-  jobTitle: "" | "CFO" | "VP Finance" | "Controller" | "AP Manager" | "Other";
-  erp: "" | "Dynamics 365 Finance & Operations" | "Business Central" | "Other";
+  jobTitle: string;
+  dynamicsPlatform: "" | "Finance & Supply Chain Management" | "Business Central" | "Other";
 };
 
 type CapturedLead = LeadForm & { capturedAt: string };
@@ -117,9 +118,10 @@ function getEmailDomain(email: string) {
 
 function validateLeadForm(form: LeadForm) {
   if (!form.firstName.trim()) return "Please enter your first name.";
+  if (!form.lastName.trim()) return "Please enter your last name.";
   if (!form.companyName.trim()) return "Please enter your company name.";
-  if (!form.jobTitle) return "Please select your job title.";
-  if (!form.erp) return "Please select your ERP.";
+  if (!form.jobTitle.trim()) return "Please enter your job title.";
+  if (!form.dynamicsPlatform) return "Please select your Dynamics Platform.";
   if (!/^\S+@\S+\.\S+$/.test(form.workEmail.trim())) return "Please enter a valid work email.";
   if (freeEmailDomains.has(getEmailDomain(form.workEmail))) return "Please use a work email address, not a free personal email domain.";
   return null;
@@ -129,7 +131,7 @@ export default function Home() {
   const [inputs, setInputs] = useState<BusinessInputs>(benchmarkInputs);
   const [activeScenario, setActiveScenario] = useState<ScenarioKey>("expected");
   const [openModule, setOpenModule] = useState<Field["module"]>("Baseline");
-  const [leadForm, setLeadForm] = useState<LeadForm>({ firstName: "", workEmail: "", companyName: "", jobTitle: "", erp: "" });
+  const [leadForm, setLeadForm] = useState<LeadForm>({ firstName: "", lastName: "", workEmail: "", companyName: "", jobTitle: "", dynamicsPlatform: "" });
   const [capturedLead, setCapturedLead] = useState<CapturedLead | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
@@ -326,12 +328,13 @@ function LeadGate({ leadForm, formError, onChange, onSubmit }: { leadForm: LeadF
       <form onSubmit={onSubmit} className="mt-6 grid gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <LeadInput label="First name" value={leadForm.firstName} onChange={(value) => onChange("firstName", value)} autoComplete="given-name" />
-          <LeadInput label="Work email" type="email" value={leadForm.workEmail} onChange={(value) => onChange("workEmail", value)} autoComplete="email" />
+          <LeadInput label="Last name" value={leadForm.lastName} onChange={(value) => onChange("lastName", value)} autoComplete="family-name" />
         </div>
+        <LeadInput label="Work email" type="email" value={leadForm.workEmail} onChange={(value) => onChange("workEmail", value)} autoComplete="email" />
         <LeadInput label="Company name" value={leadForm.companyName} onChange={(value) => onChange("companyName", value)} autoComplete="organization" />
         <div className="grid gap-4 sm:grid-cols-2">
-          <LeadSelect label="Job title" value={leadForm.jobTitle} onChange={(value) => onChange("jobTitle", value)} options={["CFO", "VP Finance", "Controller", "AP Manager", "Other"]} />
-          <LeadSelect label="ERP" value={leadForm.erp} onChange={(value) => onChange("erp", value)} options={["Dynamics 365 Finance & Operations", "Business Central", "Other"]} />
+          <LeadInput label="Job title" value={leadForm.jobTitle} onChange={(value) => onChange("jobTitle", value)} autoComplete="organization-title" />
+          <LeadSelect label="Dynamics Platform" value={leadForm.dynamicsPlatform} onChange={(value) => onChange("dynamicsPlatform", value)} options={["Finance & Supply Chain Management", "Business Central", "Other"]} />
         </div>
         {formError ? <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{formError}</p> : null}
         <button type="submit" className="focus-ring rounded-full bg-aqua px-6 py-4 font-semibold text-ink shadow-soft transition hover:-translate-y-0.5 hover:bg-white">Show my results</button>
