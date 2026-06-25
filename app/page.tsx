@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { generateBusinessCasePdf } from "@/lib/pdfBusinessCase";
 import {
   benchmarkInputs,
   BusinessInputs,
@@ -35,6 +36,7 @@ type LeadForm = {
 type CapturedLead = LeadForm & { capturedAt: string };
 
 type EmailStatus = "idle" | "sending" | "sent" | "error";
+type PdfStatus = "idle" | "generating" | "error";
 
 const freeEmailDomains = new Set([
   "gmail.com",
@@ -136,6 +138,8 @@ export default function Home() {
   const [formError, setFormError] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [pdfStatus, setPdfStatus] = useState<PdfStatus>("idle");
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const active = useMemo(() => calculateScenario(inputs, activeScenario), [inputs, activeScenario]);
   const comparison = useMemo(() => calculateAllScenarios(inputs), [inputs]);
   const visibleFields = fields.filter((field) => field.module === openModule);
@@ -151,6 +155,8 @@ export default function Home() {
     setActiveScenario("expected");
     setEmailStatus("idle");
     setEmailError(null);
+    setPdfStatus("idle");
+    setPdfError(null);
   }
 
   function updateLeadForm(field: keyof LeadForm, value: string) {
@@ -199,6 +205,21 @@ export default function Home() {
     } catch (error) {
       setEmailStatus("error");
       setEmailError(error instanceof Error ? error.message : "Email could not be sent.");
+    }
+  }
+
+  async function downloadPdfBusinessCase() {
+    if (pdfStatus === "generating") return;
+
+    setPdfStatus("generating");
+    setPdfError(null);
+
+    try {
+      await generateBusinessCasePdf(inputs);
+      setPdfStatus("idle");
+    } catch (error) {
+      setPdfStatus("error");
+      setPdfError(error instanceof Error ? error.message : "PDF could not be generated.");
     }
   }
 
@@ -299,7 +320,7 @@ export default function Home() {
             </div>
 
             {capturedLead ? (
-              <ResultsPanel active={active} comparison={comparison} maxStream={maxStream} onEmailBusinessCase={emailBusinessCase} emailStatus={emailStatus} emailError={emailError} />
+              <ResultsPanel active={active} comparison={comparison} maxStream={maxStream} onEmailBusinessCase={emailBusinessCase} emailStatus={emailStatus} emailError={emailError} onDownloadPdf={downloadPdfBusinessCase} pdfStatus={pdfStatus} pdfError={pdfError} />
             ) : (
               <LeadGate leadForm={leadForm} formError={formError} onChange={updateLeadForm} onSubmit={submitLead} />
             )}
@@ -344,7 +365,7 @@ function LeadGate({ leadForm, formError, onChange, onSubmit }: { leadForm: LeadF
   );
 }
 
-function ResultsPanel({ active, comparison, maxStream, onEmailBusinessCase, emailStatus, emailError }: { active: ReturnType<typeof calculateScenario>; comparison: ReturnType<typeof calculateAllScenarios>; maxStream: number; onEmailBusinessCase: () => void; emailStatus: EmailStatus; emailError: string | null }) {
+function ResultsPanel({ active, comparison, maxStream, onEmailBusinessCase, emailStatus, emailError, onDownloadPdf, pdfStatus, pdfError }: { active: ReturnType<typeof calculateScenario>; comparison: ReturnType<typeof calculateAllScenarios>; maxStream: number; onEmailBusinessCase: () => void; emailStatus: EmailStatus; emailError: string | null; onDownloadPdf: () => void; pdfStatus: PdfStatus; pdfError: string | null }) {
   return (
     <div className="space-y-5">
       <div className="rounded-[2rem] bg-ink p-5 text-white shadow-soft sm:p-7">
@@ -359,6 +380,7 @@ function ResultsPanel({ active, comparison, maxStream, onEmailBusinessCase, emai
           </div>
         </div>
         {emailError ? <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{emailError}</p> : null}
+        {pdfError ? <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{pdfError}</p> : null}
         <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <ResultMetric label="3-year ROI" value={formatPercent(active.roi, 0)} />
           <ResultMetric label="NPV" value={formatCurrency(active.npv, true)} />
@@ -386,7 +408,7 @@ function ResultsPanel({ active, comparison, maxStream, onEmailBusinessCase, emai
         <div className="border-b border-ink/10 p-5 sm:p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <h3 className="text-xl font-semibold">Base / Expected / Upside comparison</h3>
-            <button disabled title="Phase 2" className="rounded-full border border-ink/10 px-4 py-2 text-sm font-semibold text-muted">Download PDF Business Case</button>
+            <button onClick={onDownloadPdf} disabled={pdfStatus === "generating"} className="focus-ring rounded-full border border-ink/10 px-4 py-2 text-sm font-semibold text-pine transition hover:bg-mist disabled:cursor-not-allowed disabled:opacity-70">{pdfStatus === "generating" ? "Generating PDF…" : "Download PDF Business Case"}</button>
           </div>
         </div>
         <div className="overflow-x-auto">
