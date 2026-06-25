@@ -5,12 +5,12 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "ExFlow CFO ROI Calculator | AP Automation Business Case",
-  description: "Build a CFO-ready AP automation business case for ExFlow in Dynamics 365 across cost efficiency, working capital, control, and resource reallocation.",
+  title: "Truvio AP Automation ROI Calculator",
+  description: "Build an AP automation business case in under 5 minutes with NPV, payback period, and scenario comparison.",
   metadataBase: new URL("https://truvio.com"),
   openGraph: {
-    title: "ExFlow CFO ROI Calculator",
-    description: "A scenario-driven AP automation ROI model for CFO discovery and finance sign-off conversations.",
+    title: "Truvio AP Automation ROI Calculator",
+    description: "Adjust invoice volume, team size, and payment mix to generate a finance-ready AP automation business case.",
     type: "website"
   }
 };
